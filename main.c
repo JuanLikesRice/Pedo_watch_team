@@ -11,10 +11,11 @@ void delay_setup(){
       TACTL = TASSEL_2 + MC_2 + ID_3;           // SMCLK, contmode
 }
 void delay(unsigned int time){
-    unsigned int timer;
-    for (timer=0;timer<time; timer++){
-        __bis_SR_register(LPM0_bits + GIE);
-        CCR0 += 100;}}
+    //unsigned int timer;
+    //for (timer=0;timer<time; timer++){
+    CCR0 += time;
+    __bis_SR_register(LPM0_bits + GIE);
+    CCR0 += time;}//}
 
 void spi_setup(void)
 {   WDTCTL = WDTPW + WDTHOLD; // Stop WDT
@@ -81,13 +82,77 @@ return received_ch;
 }
 
 
+/*
+    def init(self):
+        """ Initialization for the KX126-1063.
+        Default setting is +/- 2g range.
+        """
+        # Software reset
+        val = i2c.readU8(KX126_CNTL2)
+        i2c.write8(KX126_CNTL2, (val | KX126_CNTL2_SRST))
+        # Delay 2 milliseconds
+        time.sleep(RESET_DELAY)
+        # Enter standby mode
+        i2c.write8(KX126_CNTL1, 0x00)
+        # Disable interrupts
+        i2c.write8(KX126_INC1, 0x00)
+        i2c.write8(KX126_INC5, 0x00)
+        # Initialize the pedometer engine settings
+        self.init_ped()
+        # Output data rate
+        val = i2c.readU8(KX126_ODCNTL)
+        i2c.write8(KX126_ODCNTL, (val | KX126_ODCNTL_OSA_100HZ))
+        # High resolution
+        val = i2c.readU8(KX126_CNTL1) # should be 0x00
+        i2c.write8(KX126_CNTL1, (val | KX126_CNTL1_RES))
+        # Enable pedometer engine
+        val = i2c.readU8(KX126_CNTL1) # should be 0x40 (64)
+        i2c.write8(KX126_CNTL1, (val | KX126_CNTL1_PDE))
+        # Exit standby mode
+        val = i2c.readU8(KX126_CNTL1) # should be 0x42 (66)
+        i2c.write8(KX126_CNTL1, (val | KX126_CNTL1_PC1))
+        val = i2c.readU8(KX126_CNTL1) # should be 0xC2 (194)
+        time.sleep(2)
+    # End def
+    def init_ped(self):
+        """ Initialization for the pedometer engine settings. See the app note
+        on Getting Started with Pedometer.
+        """
+        # Number of internal acceleration samples used by ped engine
+        val = i2c.readU8(KX126_LPCNTL)
+        i2c.write8(KX126_LPCNTL, (val | KX126_LPCNTL_4))
+        # Number of steps before counting
+        val = i2c.readU8(KX126_PED_CNTL1)
+        i2c.write8(KX126_PED_CNTL1, (val | KX126_PED_CNTL1_STPTH_2))
+        # Scaling factor for HPF and output data rate for the pedometer engine
+        val = i2c.readU8(KX126_PED_CNTL2)
+        i2c.write8(KX126_PED_CNTL2, (val | KX126_PED_CNTL2_HPS_4 | KX126_PED_CNTL2_ODR_100))
+        # Scaling factor for internal HPF
+        i2c.write8(KX126_PED_CNTL3, 0x17)
+        # Maximum impact from floor
+        i2c.write8(KX126_PED_CNTL4, 0x1F)
+        # Minimum impact from floor (adjust this for sensitivity)
+        i2c.write8(KX126_PED_CNTL5, 0x0A)
+        # Maximum time interval for the peak
+        i2c.write8(KX126_PED_CNTL6, 0x13)
+        # Minimum time interval for the peak
+        i2c.write8(KX126_PED_CNTL7, 0x0B)
+        # Time window for noise and delay time
+        i2c.write8(KX126_PED_CNTL8, 0x08)
+        # Time interval to prevent overflowing
+        i2c.write8(KX126_PED_CNTL9, 0x19)
+        # Minimum time interval for a single stride
+        i2c.write8(KX126_PED_CNTL10, 0x1C)
+*/
 
 
 uint8_t CNTL2[] =       {0x1B,0x80};//,0x00,0x00};
+uint8_t CNTL1[] =       {0x1A,0x00};
+
 uint8_t INC7[] =        {0x27,0x00};//,0x00,0x00};
 uint8_t INC1[] =        {0x20,0x00};//,0x00,0x00};
 uint8_t INC5[] =        {0x24,0x00};//,0x00,0x00};
-uint8_t LPCNTL =        {0x37,0x20};
+uint8_t LPCNTL[] =        {0x37,0x20};
 
 uint8_t PED_CENTL1[] =    {0x43,0x10};
 uint8_t PED_CENTL2[] =    {0x44,0x2C};
@@ -100,9 +165,11 @@ uint8_t PED_CENTL8[] =    {0x4A,0x08};
 uint8_t PED_CENTL9[] =    {0x4B,0x19};
 uint8_t PED_CENTL10[]=    {0x4C,0x1C};
 
-uint8_t ODCNTL[] =        {0x4C,0x1C};
-uint8_t CNTL1[] =         {0x4C,0x1C};
+uint8_t ODCNTL[] =        {0x1F,0x03};
 
+uint8_t CNTL1_2[] =         {0x1A,0x40};
+uint8_t CNTL1_3[] =         {0x1A,0x02};
+uint8_t CNTL1_4[] =         {0x1A,0x80};
 
 
 //uint8_t CNTL1[] =       {0x1A,0x00};//,0x00,0x00};
@@ -111,20 +178,81 @@ uint8_t PED_STPWM_H[] = {0x42,0x27};//,0x00,0x00};
 uint8_t PED_CNTL2[] =   {0x44,0x2C};//,0x00,0x00};
 uint8_t LP_CNTL[] =     {0x37,0x7B};//,0x00,0x00};
 
-uint8_t hello;
+uint8_t KX126_PED_STEP_L[] = {0x0E,0x00};//,0x00,0x00};
+uint8_t KX126_PED_STEP_H[] = {0x0F,0x00};//,0x00,0x00};
+
+unsigned int allsteps = 0;
+unsigned int somesteps;
+unsigned int read_steps(void){
+volatile uint8_t low = 0;
+volatile uint8_t high = 0;
+volatile uint8_t steps = 0;
+low =  read1byte(KX126_PED_STEP_L);
+high = read1byte(KX126_PED_STEP_H);
+steps = low;
+//steps += low;
+//#print(steps)
+return steps;
+}
+
 
 int main(void)
  {spi_setup();
  delay_setup();
+ //software reset:
+ uint8_t val1 = read1byte(CNTL2);
+ CNTL2[1] |= val1;
+ write1byte(CNT`1   L2);
+ delay(1000); //delay >=2 ms
+ write1byte(CNTL1); //{0x1A,0x00}; // reset control 1
+ //disable interupt pins
+ write1byte(INC1); //{0x20,0x00};
+ write1byte(INC5); //{0x24,0x00};
+ //setup pedometer
+ uint8_t val2 = read1byte(LPCNTL); //A0x37
+ write1byte(LPCNTL); //{0x24,0x00};
+ uint8_t val3 = read1byte(PED_CENTL1); //A0x43
+ PED_CENTL1[1] |= val3;
+ write1byte(PED_CENTL1);
+ uint8_t val4 = read1byte(PED_CENTL2); //A0x44
+ PED_CENTL2[1] |= val4;
+ write1byte(PED_CENTL3); //HPF
+ write1byte(PED_CENTL4); //HPF
+ write1byte(PED_CENTL5); //HPF
+ write1byte(PED_CENTL6); //HPF
+ write1byte(PED_CENTL7); //HPF
+ write1byte(PED_CENTL8); //HPF
+ write1byte(PED_CENTL9); //HPF
+ write1byte(PED_CENTL10); //HPF
 
-write1byte(PED_STPWM_H);
+ uint8_t val5 = read1byte(ODCNTL); //A0x44
+ ODCNTL[1] |= val5;
+ write1byte(ODCNTL); //0x1F
+
+uint8_t val6 = read1byte(CNTL1_2);
+CNTL1_2[1] |= val6;
+write1byte(CNTL1_2);
+
+uint8_t val7 = read1byte(CNTL1_3);
+CNTL1_3[1] |= val7;
+write1byte(CNTL1_3);
+
+uint8_t val8 = read1byte(CNTL1_4);
+CNTL1_4[1] |= val8;
+write1byte(CNTL1_4);
+
+
 
 while(1)
 {
- //   write2sen(PED_STPWM_H);
-   hello = read1byte(PED_STPWM_H);
+  //delay(100000);
+   allsteps = read_steps();
+   if (allsteps != 0){
+       somesteps = allsteps;
+
+   }
 }
- }
+}
 
 
 
