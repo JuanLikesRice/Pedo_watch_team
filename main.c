@@ -21,10 +21,11 @@ void spi_setup(void)
 {   WDTCTL = WDTPW + WDTHOLD; // Stop WDT
     UCA0CTL1 |= UCSWRST;                          // Enable SPI software rezet
     UCA0CTL1 |= UCSSEL_2; // SMCLK clock
+    UCA0CTL0 |= UCCKPH;
     UCA0CTL0 |= UCSYNC; // spi
     UCA0CTL0 |= UCMST; //master
     UCA0CTL0 |= UCMSB; //MSB
-    UCA0CTL0 |= UCMODE_1; //master
+    //UCA0CTL0 |= UCMODE_1; //master
 
     UCA0BR0  |= 0x02; // /2 --> 500 khz OD THE SPI CLOCK
    //UCA0CTL0 |= UCCKPH + UCMSB + UCMODE_1; // 4-pin, 8-bit SPI master
@@ -50,7 +51,7 @@ void spi_setup(void)
 
 void write1byte( uint8_t *message){
     P1OUT |= (BIT5);// VDD - on
-    message[0] |= 0x80; // write flag
+    //message[0] |= 0x80; // write flag
     //UCA0TXBUF= 0x00; //us3ed to be dummy var
     while (!(IFG2 & UCA0TXIFG));
     P1OUT &= (~BIT5); //Off nCs
@@ -64,21 +65,25 @@ void write1byte( uint8_t *message){
 }
 
 uint8_t read1byte( uint8_t *message){
-    volatile uint8_t received_ch;
+    //volatile
+    uint8_t value;
     P1OUT |= (BIT5);// VDD - on
+    uint8_t address;
+    address = message[0];
+    address += 0x80; // write flag
     //message[0] |= 0x80; // write flag
     //UCA0TXBUF= 0x00; //us3ed to be dummy var
     while (!(IFG2 & UCA0TXIFG));
     P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= message[0]; ///address
+    UCA0TXBUF= address; ///address
     while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  0x00; //value
-    received_ch = UCA0RXBUF;
+    UCA0TXBUF=  address; //value
+    value = UCA0RXBUF;
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
     P1OUT |= (BIT5);// VDD - on nCS high
     while (!(IFG2 & UCA0TXIFG));
-return received_ch;
+return value;
 }
 
 uint8_t CNTL2[] =       {0x1B,0x80};//,0x00,0x00};
@@ -115,9 +120,17 @@ uint8_t LP_CNTL[] =     {0x37,0x7B};//,0x00,0x00};
 
 uint8_t KX126_PED_STEP_L[] = {0x0E,0x00};//,0x00,0x00};
 uint8_t KX126_PED_STEP_H[] = {0x0F,0x00};//,0x00,0x00};
-
-unsigned int allsteps = 0;
+uint8_t who_asked[] = {0x11, 0x11};
+unsigned int allsteps;
 unsigned int somesteps;
+
+unsigned int var1;
+unsigned int var2;
+unsigned int var3;
+unsigned int var4;
+
+
+
 unsigned int read_steps(void){
 volatile uint8_t low = 0;
 volatile uint8_t high = 0;
@@ -134,10 +147,11 @@ return steps;
 int main(void)
  {spi_setup();
  delay_setup();
+
  //software reset:
  uint8_t val1 = read1byte(CNTL2);
  CNTL2[1] |= val1;
- write1byte(CNT`1   L2);
+ write1byte(CNTL2);
  delay(1000); //delay >=2 ms
  write1byte(CNTL1); //{0x1A,0x00}; // reset control 1
  //disable interupt pins
@@ -172,20 +186,23 @@ uint8_t val7 = read1byte(CNTL1_3);
 CNTL1_3[1] |= val7;
 write1byte(CNTL1_3);
 
-uint8_t val8 = read1byte(CNTL1_4);
-CNTL1_4[1] |= val8;
-write1byte(CNTL1_4);
+//uint8_t val8 = read1byte(CNTL1_4);
+//CNTL1_4[1] |= val8;
+//write1byte(CNTL1_4);
 
 
 
 while(1)
 {
-  //delay(100000);
-   allsteps = read_steps();
-   if (allsteps != 0){
-       somesteps = allsteps;
+    //delay(100000);
+   var1 = read1byte(CNTL1_4);
+   var2 = read1byte(who_asked);
+   var3 = read_steps();
+   //read1byte(CNTL1_4);//read_steps();//read1byte(who_asked);
+  // if (allsteps != 0){
+    //   somesteps += allsteps;
 
-   }
+   //}
 }
 }
 
@@ -204,6 +221,3 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 {
   __bic_SR_register_on_exit(LPM0_bits);
 }
-
-
-
