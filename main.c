@@ -20,7 +20,7 @@ void spi_setup(void)
 {   WDTCTL = WDTPW + WDTHOLD; // Stop WDT
     UCA0CTL1 |= UCSWRST;                          // Enable SPI software rezet
     UCA0CTL1 |= UCSSEL_2; // SMCLK clock
-    UCA0CTL0 |= UCCKPH;
+    UCA0CTL0 |= UCCKPH;//phase
     UCA0CTL0 |= UCSYNC; // spi
     UCA0CTL0 |= UCMST; //master
     UCA0CTL0 |= UCMSB; //MSB
@@ -40,76 +40,6 @@ void spi_setup(void)
     P1DIR |= BIT5;// chip select
     P1OUT |= (BIT5);// VDD - on
 }
-
-
-void write1byte( unsigned int address_in, unsigned int value_in){
-    P1OUT |= (BIT5);// VDD - on
-    //message[0] |= 0x80; // write flag
-    //UCA0TXBUF= 0x00; //us3ed to be dummy var
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= address_in; ///address
-    while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  value_in; //value
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-
-}
-
-unsigned int read1byte( unsigned int address_in){
-    //volatile
-    unsigned int value;
-    unsigned int address;
-    P1OUT |= (BIT5);// VDD - on
-    address = address_in;
-    address += 0x80; // write flag
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= address; ///address
-    while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  address; //value
-    value = UCA0RXBUF;
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-
-
-    /*
-    if (address_in == 0x0E){
-        spi_setup();
-        P1OUT |= (BIT5);// VDD - on
-        address = address_in+0x01;
-        //address += 0x80; // write flag
-        while (!(IFG2 & UCA0TXIFG));
-        P1OUT &= (~BIT5); //Off nCs
-        UCA0TXBUF= address; ///address
-        while (!(IFG2 & UCA0RXIFG));
-        UCA0TXBUF=  address; //value
-        //value = UCA0RXBUF;
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-        P1OUT |= (BIT5);// VDD - on nCS high
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-        while (!(IFG2 & UCA0TXIFG));
-    } */
-
-    return value;               }
-
 
 
 
@@ -156,24 +86,36 @@ unsigned int read1step(void){
 
 
 
-
-
-
-
-unsigned int low;
-unsigned int high;
-unsigned int steps;
-
-/*
-void high_rs(void){
+void write1byte( unsigned int address_in, unsigned int value_in){
     P1OUT |= (BIT5);// VDD - on
-
+    //message[0] |= 0x80; // write flag
+    //UCA0TXBUF= 0x00; //us3ed to be dummy var
     while (!(IFG2 & UCA0TXIFG));
     P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= 0x8F; ///address
+    UCA0TXBUF= address_in; ///address
     while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  0x00; //value
-    //high = UCA0RXBUF;
+    UCA0TXBUF=  value_in; //value
+    while (!(IFG2 & UCA0TXIFG));
+    while (!(IFG2 & UCA0TXIFG));
+    P1OUT |= (BIT5);// VDD - on nCS high
+    while (!(IFG2 & UCA0TXIFG));
+    while (!(IFG2 & UCA0TXIFG));
+    while (!(IFG2 & UCA0TXIFG));
+    while (!(IFG2 & UCA0TXIFG));
+
+}
+/*
+if (address_in == 0x0E){
+    spi_setup();
+    P1OUT |= (BIT5);// VDD - on
+    address = address_in+0x01;
+    //address += 0x80; // write flag
+    while (!(IFG2 & UCA0TXIFG));
+    P1OUT &= (~BIT5); //Off nCs
+    UCA0TXBUF= address; ///address
+    while (!(IFG2 & UCA0RXIFG));
+    UCA0TXBUF=  address; //value
+    //value = UCA0RXBUF;
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
     P1OUT |= (BIT5);// VDD - on nCS high
@@ -183,13 +125,66 @@ void high_rs(void){
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
-    //return value;               }
-}
-*/
+} */
 
 
-int main(void)
- {spi_setup();
+volatile  unsigned int value;
+volatile unsigned int value1;
+volatile unsigned int value2;
+volatile unsigned int value3;
+volatile unsigned int value4;
+unsigned int read1byte( unsigned int address_in){
+  unsigned int value;
+
+
+
+
+
+    //volatile
+    unsigned int address;
+    P1OUT |= (BIT5);// VDD - on
+    address = address_in;
+    address += 0x80; // write flag
+//    while (!(IFG2 & UCA0TXIFG));
+
+    P1OUT &= (~BIT5); //Off nCs
+    __delay_cycles(4);
+    UCA0TXBUF= address; ///address
+    value1 = UCA0RXBUF;
+    while (!(IFG2 & UCA0RXIFG));
+    UCA0TXBUF=  address; //value
+    value2 = UCA0RXBUF;
+    while (!(IFG2 & UCA0RXIFG));
+    //UCA0TXBUF=  address; //value
+    value3 = UCA0RXBUF;
+    //while (!(IFG2 & UCA0RXIFG));
+    //value4 = UCA0RXBUF;
+
+ //   UCA0TXBUF=  0x00; //value
+   // value = UCA0RXBUF;
+    //while (!(IFG2 & UCA0RXIFG));
+    //value2 = UCA0RXBUF;
+    __delay_cycles(4);
+    P1OUT |= (BIT5);// VDD - on nCS high
+    __delay_cycles(100);
+
+
+    return value3;               }
+
+
+
+
+
+
+
+
+unsigned int low;
+unsigned int high;
+unsigned int steps;
+
+
+void main(void)
+  {spi_setup();
 delay_setup();
  __delay_cycles(10);
 // delay(10000);
@@ -228,6 +223,9 @@ __delay_cycles(100);
 
 //delay(100);
 
+high =  read1byte(0x11);
+
+
 
 while(1)
 {
@@ -236,11 +234,30 @@ while(1)
 //    delay(1000);
     //read5 = read1byte(0x1A);
   //  delay(10);
-aa    __delay_cycles(100);
+9    __delay_cycles(10000);
 
     //low +=  read1step();//KX126_PED_STEP_L);
-
+// 0f -
     low =  read1byte(0x0E);//KX126_PED_STEP_L);
+    high = read1byte(0x0F);
+
+    steps += low;
+    //low =  read1byte(0x0E);//KX126_PED_STEP_L);
+    //low =  read1byte(0x0E);//KX126_PED_STEP_L);
+//    low =  read1byte(0x0E);//KX126_PED_STEP_L);
+
+    //__delay_cycles(1000000);
+
+    //high =  read1byte(0x0F);//KX126_PED_STEP_L);
+   // __delay_cycles(1000000);
+
+//    high =  read1byte(0x0E);
+  //  high =  read1byte(0x0E);
+    //high =  read1byte(0x0E);
+    // if (high > low) {
+   //steps +=low;
+
+     //}//
 //    low =  read1byte(0x0E);//KX126_PED_STEP_L);
     //high = read1byte(0x0F);//KX126_PED_STEP_H);
     //high = (read1byte(0x00F)<<8);//KX126_PED_STEP_H);
