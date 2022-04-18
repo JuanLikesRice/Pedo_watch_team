@@ -37,95 +37,49 @@ void spi_setup(void)
     P1SEL2 |= BIT2;
     P1SEL  |= BIT4;                               // Just setup for the pins (1.4 is the USCI clock)
     P1SEL2 |= BIT4;
-    P1DIR |= BIT5;// chip select
-    P1OUT |= (BIT5);// VDD - on
+    P1DIR |= BIT0;// chip select
+    P1OUT |= (BIT0);// VDD - on
 }
 
 
 
-unsigned int read1step(void){
-    unsigned int value1;
-    P1OUT |= (BIT5);// VDD - on
-    //address = address_in;
-    //address += 0x80; // write flag
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= 0x8E; ///address
-    while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  0x00; //value
-    value1 = UCA0RXBUF;
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
+void init_buttons() {
+    /*P2DIR &= ~(BIT2); // set to input
+    P2REN |= BIT2; // enable pullup/down resistors
+    P2OUT |= BIT2; // set resistors to pull up
+    P2IES |= BIT2; // listen for high to low transitions
+    P2IFG &=  ~(BIT2); // clear any pending interrupts
+    P2IE |= BIT2; // enable interrupts for these pins
+    */
+    P2DIR = 0x00;
+        P2OUT =  0x04;
+        P2REN |= 0x04;
+        P2IE |= 0x04;
+        P2IES |= 0x04;
+        P2IFG &= ~0x04;
 
-    P1OUT |= (BIT5);// VDD - on
-    //address = address_in;
-    //address += 0x80; // write flag
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= 0x8F; ///address
-    while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  0x00; //value
-    //value1 = UCA0RXBUF;
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-
-
-    return value1;               }
+}
 
 
 
 void write1byte( unsigned int address_in, unsigned int value_in){
-    P1OUT |= (BIT5);// VDD - on
+    P1OUT |= (BIT0);// VDD - on
     //message[0] |= 0x80; // write flag
     //UCA0TXBUF= 0x00; //us3ed to be dummy var
     while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
+    P1OUT &= (~BIT0); //Off nCs
     UCA0TXBUF= address_in; ///address
     while (!(IFG2 & UCA0RXIFG));
     UCA0TXBUF=  value_in; //value
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
+    P1OUT |= (BIT0);// VDD - on nCS high
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
     while (!(IFG2 & UCA0TXIFG));
 
 }
-/*
-if (address_in == 0x0E){
-    spi_setup();
-    P1OUT |= (BIT5);// VDD - on
-    address = address_in+0x01;
-    //address += 0x80; // write flag
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT &= (~BIT5); //Off nCs
-    UCA0TXBUF= address; ///address
-    while (!(IFG2 & UCA0RXIFG));
-    UCA0TXBUF=  address; //value
-    //value = UCA0RXBUF;
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    P1OUT |= (BIT5);// VDD - on nCS high
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-    while (!(IFG2 & UCA0TXIFG));
-} */
 
 
 volatile  unsigned int value;
@@ -133,21 +87,17 @@ volatile unsigned int value1;
 volatile unsigned int value2;
 volatile unsigned int value3;
 volatile unsigned int value4;
+
 unsigned int read1byte( unsigned int address_in){
   unsigned int value;
-
-
-
-
-
     //volatile
     unsigned int address;
-    P1OUT |= (BIT5);// VDD - on
+    P1OUT |= (BIT0);// VDD - on
     address = address_in;
     address += 0x80; // write flag
 //    while (!(IFG2 & UCA0TXIFG));
 
-    P1OUT &= (~BIT5); //Off nCs
+    P1OUT &= (~BIT0); //Off nCs
     __delay_cycles(4);
     UCA0TXBUF= address; ///address
     value1 = UCA0RXBUF;
@@ -165,7 +115,7 @@ unsigned int read1byte( unsigned int address_in){
     //while (!(IFG2 & UCA0RXIFG));
     //value2 = UCA0RXBUF;
     __delay_cycles(4);
-    P1OUT |= (BIT5);// VDD - on nCS high
+    P1OUT |= (BIT0);// VDD - on nCS high
     __delay_cycles(100);
 
 
@@ -194,14 +144,27 @@ write1byte(0x1B,0x80); //CNTL2);
 __delay_cycles(100);
 
 write1byte(0x1A,0x00);//CNTL1
-write1byte(0x41,0x10); //THSHOLD
-write1byte(0x42,0x27);
+
 
 write1byte(0x44,0x2C);//CNTL2
 write1byte(0x37,0x7B);//CNTL
-write1byte(0x26,0x00);//INC7
+
+
+
+write1byte(0x41,0x10); //THSHOLD low
+write1byte(0x42,0x00); // ths high steps
+
+
+write1byte(0x24,0x20);//INC5 INT2 Enabled, active low
+write1byte(0x25,0x20);//INC6
+write1byte(0x26,0x20);//INC7 //step wm enabled INT 2
+
+// high =  read1byte(0x26);
+
+
 write1byte(0x20,0x00);//INC1 x20
-write1byte(0x24,0x00);//INC5 x20
+
+
 
 
 write1byte(0x43,0x66);//PED_CENTL1);
@@ -223,25 +186,42 @@ __delay_cycles(100);
 
 //delay(100);
 
-high =  read1byte(0x11);
 
 
+init_buttons();
 
 while(1)
 {
+
+
+
+    __delay_cycles(1000000);
+    __delay_cycles(1000000);
+    __delay_cycles(1000000);
+    __delay_cycles(1000000);
+
+
+    //low =  read1byte(0x0E);//KX126_PED_STEP_L);
+
+      //  high = read1byte(0x0F);
+
+        //steps += low;
+
+
+
 
     //delay(10);
 //    delay(1000);
     //read5 = read1byte(0x1A);
   //  delay(10);
-9    __delay_cycles(10000);
+    //__delay_cycles(10000);
 
     //low +=  read1step();//KX126_PED_STEP_L);
 // 0f -
-    low =  read1byte(0x0E);//KX126_PED_STEP_L);
-    high = read1byte(0x0F);
+    //low =  read1byte(0x0E);//KX126_PED_STEP_L);
+    //high = read1byte(0x0F);
 
-    steps += low;
+    //steps += low;
     //low =  read1byte(0x0E);//KX126_PED_STEP_L);
     //low =  read1byte(0x0E);//KX126_PED_STEP_L);
 //    low =  read1byte(0x0E);//KX126_PED_STEP_L);
@@ -287,13 +267,49 @@ while(1)
 
    //var3 = read_steps();
    //var6 = read1byte(CNTL1_2);
-   //read1byte(CNTL1_4);//read_steps();//read1byte(who_asked);
+    //read1byte(CNTL1_4);//read_steps();//read1byte(who_asked);
   // if (allsteps != 0){
     //   somesteps += allsteps;
 
    //}
 }
 }
+
+
+
+
+__interrupt void Port_2(void)
+{
+    
+
+
+    P2IFG &= ~0x04;
+
+    if ((P2IN & 0x04) == 0) {//red
+        low =  read1byte(0x0E);//KX126_PED_STEP_L);
+
+            high = read1byte(0x0F);
+
+            steps += low;
+
+
+    }
+//    P2IFG &= ~(BIT2);
+
+
+
+
+    __bic_SR_register_on_exit(LPM3_bits);
+    
+    
+    
+flag = 1;
+P1IFG &= (~BIT1); // P2.1 IFG clear
+}
+
+
+
+
 
 
 
