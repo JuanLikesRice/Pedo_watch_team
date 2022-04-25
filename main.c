@@ -159,7 +159,7 @@ write1byte(0x1A,0x00);//CNTL1
 write1byte(0x44,0x2C);//CNTL2
 write1byte(0x37,0x7B);//CNTL
 
-write1byte(0x41,0x06); //THSHOLD low
+write1byte(0x41,0x03); //THSHOLD low
 write1byte(0x42,0x00); // ths high steps
 
 write1byte(0x24,0x20);//INC5 INT2 Enabled, active low
