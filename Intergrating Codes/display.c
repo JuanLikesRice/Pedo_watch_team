@@ -225,7 +225,7 @@ void sendColor(uint8_t dc, uint16_t col, int num_pix){
         while (!(IFG2 & UCB0TXIFG));  // USCI_A0 TX buffer ready?
         UCB0TXBUF = upper;
 //        while (!(IFG2 & UCB0TXIFG));  // USCI_A0 TX buffer ready?
-        UCB0TXBUF = lower;
+       UCB0TXBUF = lower;
     }
     //Turn off Data or command;
     while(UCB0STAT & UCBUSY);
@@ -372,22 +372,23 @@ char* itoa(int num, char* str, int count)
     str[count]=0;
     return str;
 }
-uint8_t steps=0;
+int i;
 void displayClock(){
     while(1) {
-        int i =0;
+        i =0;
         for(;i<86400;i++){
-            if (i%10==0){
-                read1byte(0x0E);
-                steps += read1byte(0x0E);
-                char buffer[6];
-                char display[14] = "Steps: ";
-                itoa(steps,buffer,5);
-                strcat(display,buffer);
-                drawString(display, 0x0F, 0x0F, 0x05);
-                delay(10900);
-                i+=3;
-            }else{
+//            if (i%10==0){
+//                uint8_t low =  read1byte(0x0E);//KX126_PED_STEP_L);
+//                read1byte(0x0F);
+//                steps += low;
+//                char buffer[6];
+//                char display[14] = "Steps: ";
+//                itoa(steps,buffer,5);
+//                strcat(display,buffer);
+//                drawString(display, 0x0F, 0x0F, 0x05);
+//                delay(10900);
+//                i+=3;
+//            }else{
                 int h = i/(60*60), m = (i/60)%60, s = i%60;
                 char buffer[2];
                 char display[15] = "Time: ";
@@ -402,7 +403,7 @@ void displayClock(){
                 drawString(display, 0x05, 0x05, 0x05);
                 delay(10900);
                 sendScreenColor(BLACK);
-            }
+//            }
 
         }
     }
@@ -421,16 +422,23 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
   LPM3_EXIT;
 }
 
-//#pragma vector=PORT2_VECTOR
-//__interrupt void button(void)
-//{
-//    P2IFG &= ~(BIT3);//Clear the button press.
-//    send1Byte(0,DISPON);
-//    send1Byte(0, WRDISBV);
-//        send1Byte(1, 0x00);
-//        delay(9000);
-//    while(!(P2IN & BIT3));
-//    send1Byte(0,DISPOFF);
-//}
+uint8_t low=0, high=0, steps=0;
+#pragma vector=PORT2_VECTOR
+__interrupt void button(void)
+{
+    P2IFG &= ~(BIT2);//Clear the button press.
+    low =  read1byte(0x0E);//KX126_PED_STEP_L);
+    high = read1byte(0x0F);
+    steps += low;
+    char buffer[6];
+    char display[14] = "Steps: ";
+    itoa(steps,buffer,5);
+    strcat(display,buffer);
+    drawString(display, 0x0F, 0x0F, 0x05);
+    delay(10900);
+    sendScreenColor(BLACK);
+    LPM3_EXIT;
+    i+=3;
+}
 
 

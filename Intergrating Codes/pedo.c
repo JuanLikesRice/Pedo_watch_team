@@ -11,7 +11,7 @@ void pedo_spi_setup()
 {
     WDTCTL = WDTPW + WDTHOLD; // Stop WDT
     //Set up SPI for Pedometer
-    UCA0CTL1 |= UCSWRST;    // Put B into software reset
+    UCA0CTL1 |= UCSWRST;    // Put A into software reset
     UCA0CTL1 |= UCSSEL_2;   // SMCLK clock
     UCA0BR0  |= 0x02;       // /2 --> 500 khz OD THE SPI CLOCK
 
@@ -59,7 +59,6 @@ void init_pedo_interrupt(){
 
 void write1byte( uint8_t address_in, uint8_t value_in){
     P2OUT |= BIT7;// VDD - on
-
     while (!(IFG2 & UCA0TXIFG));
     P2OUT &= ~BIT7; //Off nCs
     UCA0TXBUF= address_in; ///address
@@ -107,35 +106,68 @@ uint8_t read1byte( uint8_t address_in){
 
 
 void pedo_init(){
-    write1byte(CNTL2,BIT7);//0x80
-    __delay_cycles(100);
+//    write1byte(CNTL2,BIT7);//0x80
+//    __delay_cycles(100);
+//
+//    write1byte(CNTL1,0x00);//CNTL1
+//
+//    write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//0x2C
+//    write1byte(LP_CNTL, BIT6|BIT5|BIT4|BIT3|BIT1|BIT0);//0x7B
+//
+//    write1byte(PED_STPWM_L, BIT1|BIT0); //0x03 - THSHOLD low
+//    write1byte(PED_STPWM_H, 0x00); // ths high steps
+//
+//    write1byte(INC5, BIT5);//INC5 INT2 Enabled, active low
+//    write1byte(INC6, BIT5);//INC6
+//    write1byte(INC7, BIT5);//0x20 step wm enabled INT 2
+//    // high =  read1byte(0x26);
+//
+//    write1byte(INC1,0x00);//INC1 x20
+//
+//    write1byte(PED_CNTL1, BIT6|BIT5|BIT2|BIT1);//0x66
+//    write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//0x2C
+//    write1byte(PED_CNTL3, BIT4|BIT2|BIT1|BIT0);//0x17
+//    write1byte(PED_CNTL4, BIT4|BIT3|BIT2|BIT1|BIT0);//0x1F
+//    write1byte(PED_CNTL5, BIT5|BIT2);//0x24
+//    write1byte(PED_CNTL6, BIT4|BIT1|BIT0);//0x13
+//    write1byte(PED_CNTL7, BIT3|BIT1|BIT0);//0x0B
+//    write1byte(PED_CNTL8, BIT3);//0x08
+//    write1byte(PED_CNTL9, BIT4|BIT3|BIT0);//0x19
+//    write1byte(PED_CNTL10, BIT4|BIT3|BIT2);//0x1C
+//    write1byte(CNTL1, BIT7|BIT6|BIT1);//0xC2
+//    __delay_cycles(100);
 
-    write1byte(CNTL1,0x00);//CNTL1
+    write1byte(CNTL1,0x00);             //a) Standby mode, disable the pedometer.
+     //Set to every 3 steps.
+//     write1byte(PED_STPWM_L, BIT1|BIT0); //b) 0x03 - THSHOLD low
+//     write1byte(PED_STPWM_H, 0x00);      // ths high steps
 
-    write1byte(PED_CNTL2, BIT5|BIT3|BIT2)//0x2C
-    write1byte(LP_CNTL, BIT6|BIT5|BIT4|BIT3|BIT1|BIT0);//0x7B
+     write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//c) 0x2C - Set 100 Hz output data rate (ODR) for the engine
 
-    write1byte(PED_STPWM_L, BIT1|BIT0); //0x03 - THSHOLD low
-    write1byte(PED_STPWM_H, 0x00); // ths high steps
+     write1byte(LP_CNTL, BIT6|BIT5|BIT4|BIT3|BIT1|BIT0);//d) 0x7B - Set Low Power Control
 
-    write1byte(INC5, BIT5);//INC5 INT2 Enabled, active low
-    write1byte(INC6, BIT5);//INC6
-    write1byte(INC7, BIT5);//0x20 step wm enabled INT 2
-    // high =  read1byte(0x26);
+     write1byte(INC7, BIT5);             //e) 0x20 step wm enabled INT 2
 
-    write1byte(INC1,0x00);//INC1 x20
+//     write1byte(INC1,0x00);              //f) INC1 x20 -->
 
-    write1byte(PED_CNTL1, BIT6|BIT5|BIT2|BIT1);//0x66
-    write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//0x2C
-    write1byte(PED_CNTL3, BIT4|BIT2|BIT1|BIT0);//0x17
-    write1byte(PED_CNTL4, BIT4|BIT3|BIT2|BIT1|BIT0);//0x1F
-    write1byte(PED_CNTL5, BIT5|BIT2);//0x24
-    write1byte(PED_CNTL6, BIT4|BIT1|BIT0);//0x13
-    write1byte(PED_CNTL7, BIT3|BIT1|BIT0);//0x0B
-    write1byte(PED_CNTL8, BIT3);//0x08
-    write1byte(PED_CNTL9, BIT4|BIT3|BIT0);//0x19
-    write1byte(PED_CNTL10, BIT4|BIT3|BIT2);//0x1C
-    write1byte(CNTL1, BIT7|BIT6|BIT1);//0xC2
-    __delay_cycles(100);
+//     write1byte(INC5, BIT5);             //g) x20 INC5 INT2 Enabled, active low, latched
+
+ //    write1byte(INC6, BIT5);//INC6
+
+     // high =  read1byte(0x26);
+     //h) x20 INC5 INT2 Enabled, active low, latched
+     write1byte(PED_CNTL1, BIT6|BIT5|BIT2|BIT1);//0x66
+     write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//0x2C - Set 100 Hz output data rate (ODR) for the engine
+     write1byte(PED_CNTL3, BIT4|BIT2|BIT1|BIT0);//0x17
+     write1byte(PED_CNTL4, BIT4|BIT3|BIT2|BIT1|BIT0);//0x1F
+     write1byte(PED_CNTL5, BIT5|BIT2);//0x24
+     write1byte(PED_CNTL6, BIT4|BIT1|BIT0);//0x13
+     write1byte(PED_CNTL7, BIT3|BIT1|BIT0);//0x0B
+     write1byte(PED_CNTL8, BIT3);//0x08
+     write1byte(PED_CNTL9, BIT4|BIT3|BIT0);//0x19
+     write1byte(PED_CNTL10, BIT4|BIT3|BIT2);//0x1C
+
+     write1byte(CNTL1, BIT7|BIT6|BIT1);      //i) 0xC2
+     __delay_cycles(100);
 }
 
