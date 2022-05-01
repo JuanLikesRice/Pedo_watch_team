@@ -12,6 +12,7 @@
 //#include <display.h>
 
 //Define some Registers.
+#define MAN_ID 0x00     // Maufactoring ID: 0x4B 0x69 0x67 0x6E
 #define PED_STP_L 0x0E  // 16-bit pedometor counter register - p.35
 #define PED_STP_H 0x0F  // 16-bit pedometor counter register - p.35
 #define CNTL1 0x1A      // Control Register 1. Controls the main feature set - p.40

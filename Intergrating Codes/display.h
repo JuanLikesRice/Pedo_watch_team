@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <pedo.h>
 //Define some common commands.
 #define SWRESET 0x01 //Software Reset - 163
 #define SLPIN 0x10   //Sleep in - 182

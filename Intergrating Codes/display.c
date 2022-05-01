@@ -423,12 +423,18 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 }
 
 uint8_t low=0, high=0, steps=0;
+uint8_t id;
 #pragma vector=PORT2_VECTOR
 __interrupt void button(void)
 {
-    P2IFG &= ~(BIT2);//Clear the button press.
-    low =  read1byte(0x0E);//KX126_PED_STEP_L);
-    high = read1byte(0x0F);
+
+    if (!(P2IN & BIT2)) {
+        P2IFG &= ~(BIT2);//Clear the button press.
+    }else if(!(P2IN & BIT3)){
+        P2IFG &= ~(BIT3);//Clear the button press.
+    }
+    low =  read1byte(PED_STP_L);//KX126_PED_STEP_L);
+    high = read1byte(PED_STP_H);
     steps += low;
     char buffer[6];
     char display[14] = "Steps: ";
@@ -439,6 +445,7 @@ __interrupt void button(void)
     sendScreenColor(BLACK);
     LPM3_EXIT;
     i+=3;
+
 }
 
 

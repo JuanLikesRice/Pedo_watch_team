@@ -42,14 +42,14 @@ void pedo_spi_setup()
 
 void init_pedo_interrupt(){
     //Pedo Interrupt;
-    P2DIR &= ~BIT2; // set to input
-    P2REN |= BIT2 ;     // enable pullup/down resistors
-    P2OUT |= BIT2 ;     // set resistors to pull up
+    P2DIR &= ~(BIT2|BIT3); // set to input
+    P2REN |= BIT2|BIT3 ;     // enable pullup/down resistors
+    P2OUT |= BIT2|BIT3 ;     // set resistors to pull up
 
     /* Uncomment the following code if you want to use interrupts to detect button presses */
-    P2IES |= BIT2; // listen for high to low transitions
-    P2IFG &=  ~BIT2;
-    P2IE |= BIT2; // enable interrupts for these pins
+    P2IES |= BIT2|BIT3; // listen for high to low transitions
+    P2IFG &=  ~(BIT2|BIT3);
+    P2IE |= BIT2|BIT3; // enable interrupts for these pins
 }
 
 
@@ -138,19 +138,19 @@ void pedo_init(){
 //    __delay_cycles(100);
 
     write1byte(CNTL1,0x00);             //a) Standby mode, disable the pedometer.
-     //Set to every 3 steps.
-//     write1byte(PED_STPWM_L, BIT1|BIT0); //b) 0x03 - THSHOLD low
-//     write1byte(PED_STPWM_H, 0x00);      // ths high steps
+     //Set to every 10 steps.
+     write1byte(PED_STPWM_L, BIT3|BIsT1); //b) 0x0A - THSHOLD low
+     write1byte(PED_STPWM_H, 0x00);      // ths high steps
 
      write1byte(PED_CNTL2, BIT5|BIT3|BIT2);//c) 0x2C - Set 100 Hz output data rate (ODR) for the engine
 
      write1byte(LP_CNTL, BIT6|BIT5|BIT4|BIT3|BIT1|BIT0);//d) 0x7B - Set Low Power Control
 
-     write1byte(INC7, BIT5);             //e) 0x20 step wm enabled INT 2
+     write1byte(INC7, BIT6|BIT5);             //e) 0x20 step wm enabled INT 2
 
-//     write1byte(INC1,0x00);              //f) INC1 x20 -->
+     write1byte(INC1,0x00);              //f) INC1 --> Interrupt Control 1
 
-//     write1byte(INC5, BIT5);             //g) x20 INC5 INT2 Enabled, active low, latched
+     write1byte(INC5, BIT5|BIT3);             //g) x20 INC5 INT2 Enabled, active low, unlatched
 
  //    write1byte(INC6, BIT5);//INC6
 

@@ -8,7 +8,7 @@ int main(void)
 {
     _enable_interrupts();
     pedo_spi_setup();
-    __delay_cycles(10);
+    __delay_cycles(6000);
     pedo_init();
 
 //    while(1);
