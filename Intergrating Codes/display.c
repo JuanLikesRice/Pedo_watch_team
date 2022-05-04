@@ -5,6 +5,7 @@
  *      Author: phuso
  */
 #include <display.h>
+uint8_t low=0, high=0, steps=0;
 
 const unsigned char font[96][6] = {
     {0x00,0x00,0x00,0x00,0x00,0x00}, //
@@ -110,8 +111,8 @@ const unsigned char font[96][6] = {
  */
 void delay_setup(){
       WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
-//      BCSCTL1 |= CALBC1_8MHZ;
-//      DCOCTL |= CALDCO_8MHZ;
+      BCSCTL1 |= CALBC1_8MHZ;
+      DCOCTL  |= CALDCO_8MHZ;
       BCSCTL3 |= LFXT1S_2;                      // ACLK = VLO
       CCTL0 = CCIE;                             // CCR0 interrupt enabled
       TACTL = TASSEL_1 + MC_2;                  // ACLK, Continuous mode => 12kHz
@@ -314,7 +315,6 @@ void initDisplay(){
 //    send1Byte(0, WRCABCMB);
 //    send1Byte(1, 0xFF); //0|0|BCTRL|0 DD|BL|0|0
 //    delay(7000);
-
 }
 
 /*
@@ -360,7 +360,7 @@ void drawString(char* string, uint8_t xStartIndex, uint8_t yStartIndex, uint8_t 
     }
 }
 
-// Implementation of itoa()
+// Implementation of itoa() //integer into string
 char* itoa(int num, char* str, int count)
 {
     int i=count-1;
@@ -372,40 +372,66 @@ char* itoa(int num, char* str, int count)
     str[count]=0;
     return str;
 }
-int i;
-void displayClock(){
-    while(1) {
-        i =0;
-        for(;i<86400;i++){
-//            if (i%10==0){
-//                uint8_t low =  read1byte(0x0E);//KX126_PED_STEP_L);
-//                read1byte(0x0F);
-//                steps += low;
-//                char buffer[6];
-//                char display[14] = "Steps: ";
-//                itoa(steps,buffer,5);
-//                strcat(display,buffer);
-//                drawString(display, 0x0F, 0x0F, 0x05);
-//                delay(10900);
-//                i+=3;
-//            }else{
-                int h = i/(60*60), m = (i/60)%60, s = i%60;
-                char buffer[2];
-                char display[15] = "Time: ";
-                itoa(h,buffer,2);
-                strcat(display,buffer);
-                strcat(display,":");
-                itoa(m,buffer,2);
-                strcat(display,buffer);
-                strcat(display,":");
-                itoa(s,buffer,2);
-                strcat(display,buffer);
-                drawString(display, 0x05, 0x05, 0x05);
-                delay(10900);
-                sendScreenColor(BLACK);
-//            }
+int time_count = 0;
 
-        }
+enum state_enum{displaying, changetime} state;
+
+unsigned int state_flag = 0;
+
+
+void update_screen(){
+
+    sendScreenColor(BLACK);
+    int h = time_count/(60*60), m = (time_count/60)%60, s = time_count%60;
+    char buffer[2];
+    char display[15] = "Time: ";
+    itoa(h,buffer,2);
+    strcat(display,buffer);
+    strcat(display,":");
+    itoa(m,buffer,2);
+    strcat(display,buffer);
+    strcat(display,":");
+    itoa(s,buffer,2);
+    strcat(display,buffer);
+    drawString(display, 0x05, 0x05, 0x05);
+
+    char s_buffer[6];
+    char s_display[14] = "Steps: ";
+    itoa(steps,s_buffer,5);
+    strcat(s_display,s_buffer);
+    drawString(s_display, 0x1F, 0x0F, 0x05);
+
+    if (state ==changetime){
+
+        //char r_buffer[6];
+        char r_display[14] = "Change time";
+        //itoa(0,r_buffer,5);
+        //strcat(r_display,r_buffer);
+        drawString(r_display, 0x0F, 0x0F, 0x05);
+    }
+
+}
+
+
+void displayClock(){
+
+    while(1) {
+
+        update_screen();
+
+       /* if (state == displaying){
+            char r_buffer[6];
+            char r_display[14] = "RESET M";
+            itoa(steps,r_buffer,5);
+            strcat(r_display,r_buffer);
+            drawString(s_display, 0x1F, 0x0F, 0x05);
+        }*/
+
+        delay(10900); //increment every second
+        time_count = (time_count + 1) ;
+        if  (time_count > 86400){
+            time_count -= 86400;  }
+
     }
 }
 
@@ -422,30 +448,88 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
   LPM3_EXIT;
 }
 
-uint8_t low=0, high=0, steps=0;
+
 uint8_t id;
+int button_press;
+int change_flag = 0;
+
 #pragma vector=PORT2_VECTOR
 __interrupt void button(void)
 {
+    P2IFG &= ~(BIT2 + BIT3 + BIT4) ;
+    change_flag = 0;
+   int button_press = 0b000;
 
-    if (!(P2IN & BIT2)) {
-        P2IFG &= ~(BIT2);//Clear the button press.
-    }else if(!(P2IN & BIT3)){
-        P2IFG &= ~(BIT3);//Clear the button press.
+   if ((!(P2IN & BIT3)) && (!(P2IN & BIT4))){
+       button_press |= BIT3 + BIT4;
+       //time_count = 42;
+       //state_flag = 1;
+       //change_flag = 1;
+       //state = changetime;
+       // && (change_flag == 1)
+
+   }
+   else{
+    if  (!(P2IN & BIT2)) {
+        button_press |= BIT2;}
+
+    if  (!(P2IN & BIT3)) {//top_botton
+        button_press |= BIT3;}
+
+    if  (!(P2IN & BIT4)) { //bottom button
+        button_press |= BIT4;    }
+   }
+
+    //button, interupt conditions
+    if (button_press == BIT2){
+        low =  read1byte(PED_STP_L);//KX126_PED_STEP_L);
+        high = read1byte(PED_STP_H);
+        steps += low;
+        delay(100);
+        time_count += 2;
     }
-    low =  read1byte(PED_STP_L);//KX126_PED_STEP_L);
-    high = read1byte(PED_STP_H);
-    steps += low;
-    char buffer[6];
-    char display[14] = "Steps: ";
-    itoa(steps,buffer,5);
-    strcat(display,buffer);
-    drawString(display, 0x0F, 0x0F, 0x05);
-    delay(10900);
-    sendScreenColor(BLACK);
-    LPM3_EXIT;
-    i+=3;
+
+   //state machine for
+   //if displaying and you want to read steps
+   if ((state == displaying) && (change_flag == 0)){
+   if (button_press == BIT3 ){ //top button
+
+        low =  read1byte(PED_STP_L);//KX126_PED_STEP_L);
+        high = read1byte(PED_STP_H);
+        steps += low;
+        delay(100);
+
+    }
+    else if (button_press == BIT4 ){
+        steps = 0;
+
+    }
+    else if (button_press ==(BIT3+BIT4)){
+        state_flag = 1;
+        state = changetime;
+        change_flag = 1;
+    } }
+
+   if ((state == changetime) && (change_flag == 0)){
+   if (button_press == BIT3 ){ //top button
+       time_count += 3600;
+    }
+    else if (button_press == BIT4 ){//bottom button
+        time_count += 60;
+
+    }
+    else if (button_press ==(BIT3+BIT4)){
+        state_flag = 0;
+        state = displaying;
+        change_flag = 1;
+
+    }
+
+
+
+    }
+ LPM3_EXIT;
+
+
 
 }
-
-
