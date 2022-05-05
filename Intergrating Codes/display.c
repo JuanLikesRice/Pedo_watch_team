@@ -106,6 +106,7 @@ const unsigned char font[96][6] = {
     {0x00,0x00,0x00,0x00,0x00,0x00}
 };
 
+
 /**
  * This set up the delay using CCTL.
  */
@@ -382,7 +383,8 @@ unsigned int state_flag = 0;
 void update_screen(){
 
     sendScreenColor(BLACK);
-    int h = time_count/(60*60), m = (time_count/60)%60, s = time_count%60;
+
+    int h = time_count/(3600), m = (time_count/60)%60, s = time_count%60;
     char buffer[2];
     char display[15] = "Time: ";
     itoa(h,buffer,2);
@@ -403,10 +405,8 @@ void update_screen(){
 
     if (state ==changetime){
 
-        //char r_buffer[6];
         char r_display[14] = "Change time";
-        //itoa(0,r_buffer,5);
-        //strcat(r_display,r_buffer);
+
         drawString(r_display, 0x0F, 0x0F, 0x05);
     }
 
@@ -452,21 +452,19 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 uint8_t id;
 int button_press;
 int change_flag = 0;
+int button_down = 0;
 
 #pragma vector=PORT2_VECTOR
 __interrupt void button(void)
 {
     P2IFG &= ~(BIT2 + BIT3 + BIT4) ;
     change_flag = 0;
-   int button_press = 0b000;
+   int button_press = 0b00000;
+   button_down = 0;
 
    if ((!(P2IN & BIT3)) && (!(P2IN & BIT4))){
-       button_press |= BIT3 + BIT4;
-       //time_count = 42;
-       //state_flag = 1;
-       //change_flag = 1;
-       //state = changetime;
-       // && (change_flag == 1)
+
+       button_press |= (BIT3 + BIT4);
 
    }
    else{
@@ -481,12 +479,13 @@ __interrupt void button(void)
    }
 
     //button, interupt conditions
+   if (button_press == BIT2){time_count = 0;}
     if (button_press == BIT2){
         low =  read1byte(PED_STP_L);//KX126_PED_STEP_L);
         high = read1byte(PED_STP_H);
         steps += low;
         delay(100);
-        time_count += 2;
+        //time_count += 2;
     }
 
    //state machine for
@@ -511,17 +510,18 @@ __interrupt void button(void)
     } }
 
    if ((state == changetime) && (change_flag == 0)){
-   if (button_press == BIT3 ){ //top button
+
+   if (button_press ==(BIT3+BIT4)){
+       state_flag = 0;
+       state = displaying;
+       change_flag = 1;
+       }
+
+   else if (button_press == BIT3 ){ //top button
        time_count += 3600;
     }
     else if (button_press == BIT4 ){//bottom button
         time_count += 60;
-
-    }
-    else if (button_press ==(BIT3+BIT4)){
-        state_flag = 0;
-        state = displaying;
-        change_flag = 1;
 
     }
 
