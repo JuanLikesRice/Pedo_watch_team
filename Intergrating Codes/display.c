@@ -373,15 +373,14 @@ char* itoa(int num, char* str, int count)
     str[count]=0;
     return str;
 }
-int time_count = 0;
-
+int time_count = 0; // this is base time which changed each second
 enum state_enum{displaying, changetime} state;
-
 unsigned int state_flag = 0;
+//This corrosponds to state 
 
 
 void update_screen(){
-
+// use for updating screen periodically
     sendScreenColor(BLACK);
 
     int h = time_count/(3600), m = (time_count/60)%60, s = time_count%60;
@@ -419,17 +418,9 @@ void displayClock(){
 
         update_screen();
 
-       /* if (state == displaying){
-            char r_buffer[6];
-            char r_display[14] = "RESET M";
-            itoa(steps,r_buffer,5);
-            strcat(r_display,r_buffer);
-            drawString(s_display, 0x1F, 0x0F, 0x05);
-        }*/
-
         delay(10900); //increment every second
         time_count = (time_count + 1) ;
-        if  (time_count > 86400){
+        if  (time_count > 86400){///incase overflow
             time_count -= 86400;  }
 
     }
@@ -451,7 +442,8 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 
 uint8_t id;
 int button_press;
-int change_flag = 0;
+int change_flag = 0; 
+// this flag will be active once you change state thus you can only change state once during button press
 int button_down = 0;
 
 #pragma vector=PORT2_VECTOR
@@ -468,7 +460,7 @@ __interrupt void button(void)
 
    }
    else{
-    if  (!(P2IN & BIT2)) {
+    if  (!(P2IN & BIT2)) {// step interupt 
         button_press |= BIT2;}
 
     if  (!(P2IN & BIT3)) {//top_botton
@@ -485,7 +477,7 @@ __interrupt void button(void)
         high = read1byte(PED_STP_H);
         steps += low;
         delay(100);
-        //time_count += 2;
+        //reading steps 
     }
 
    //state machine for
